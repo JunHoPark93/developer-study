@@ -1,0 +1,111 @@
+##팩토리 패턴
+
+어떤 클래스의 인스턴스를 만들지 서브클래스에서 결정하는 패턴
+
+조건에 따른 객체 생성 부분을 자신이 직접하지 않고 팩토리 클래스에 위임하여 객체를 생성하는 방법이라고 할 수 있다. 이렇게 되면 객체간 결합도가 낮아져서 유지보수에 좋다.
+
+```java
+private static final int LINE_VERTEX = 2;
+private static final int TRIANGLE_VERTEX = 3;
+private static final int RECTANGLE_VERTEX = 4;
+
+public static Figure createFigure(Points points) {
+    int size = points.getSize();
+
+    if (size == LINE_VERTEX) {
+        return new Line(points);
+    }
+    if (size == TRIANGLE_VERTEX) {
+        return new Triangle(points);
+    }
+    if (size == RECTANGLE_VERTEX) {
+        return new Rectangle(points);
+    }
+    throw new IllegalArgumentException("Points 형식이 잘못 되었습니다");
+}
+```
+
+정의해본 팩토리 패턴이다. Points는 좌표의 배열을 가진 객체이다. 
+
+```java
+public class Points {
+    private final List<Point> points;
+
+    public Points(List<Point> points) {
+        checkPointsIsDuplicate(points);
+        this.points = points;
+    }
+
+    private void checkPointsIsDuplicate(List<Point> points) {
+        Set<Point> pointSet = new HashSet<>(points);
+        if (pointSet.size() != points.size()) {
+            throw new IllegalArgumentException("중복된 좌표는 입력할 수 없습니다");
+        }
+    }
+    // ... 중략
+}
+```
+
+### 위 팩토리 패턴의 문제점
+
+여러 중첩된 if 문으로 인한 보기 싫음.
+
+Java 8 부터 사용되는 함수형 인터페이스를 사용하여 간결하게 리팩토링 할 수 있다. 람다식에 메서드 또는 생성자의 매개타입으로 사용된다. 
+
+패키지는 java.util.function에 있다.
+
+#### Consumer
+
+매개값이 있고 리턴 값이 없다. 
+
+```java
+Consumer<T> 
+void accept(T t) // 객체 T를 받아서 소비한다
+
+BiConsumer<T, U>
+void accet(T t, U u) // 객체 T와 U를 받아서 소비한다
+    
+IntConsumer
+void accapt(int value) // int 값을 받아서 소비한다
+```
+
+#### Supplier
+
+매개 변수는 없고 리턴값이 있다. 단순 공급자의 역할을 한다.
+
+```java
+Supplier<T>
+T get() // T 객체를 리턴한다
+
+BooleanSupplier
+boolean getAsBoolean() // boolean 값을 리턴한다
+
+IntSupplier
+int getAsInt() // int 값을 리턴한다
+```
+
+#### Function
+
+매개 변수와 리턴값이 둘 다 존재한다.
+
+```java
+Function<T, R>
+R apply(T t) // 객체 T를 객체 R로 매핑한다
+    
+BiFunction<T,U,R> 
+R apply(T t, U u) // 객체 T와 U를 객체 R로 매핑한다
+
+IntFunction<R>
+R apply(int value) // int를 객체 R로 매핑한다
+```
+
+#### Predicate
+
+매개 변수가 있고 boolean을 리턴한다.
+
+```java
+Predicate<T>
+boolean test(T t) // 객체 T를 판별
+
+BiPredicate<T, U> 
+boolean test(T t, U u) // 객체 T와 U를 판별
