@@ -47,7 +47,75 @@ Object Oriented: 객체 위주
 
 static은 클래스의 혹은 공통적인 이라는 의미를 가지고 있다. 즉 static 변수 (클래스 변수라고도 함)는 인스턴스에 관계 없이 같은 값을 갖는다. 그 이유는 하나의 변수를 모든 인스턴스가 공유하기 때문이다. 그래서 static이 붙은 변수와 함수는 인스턴스를 생성하지 않고 사용할 수 있다.
 
-// static 에 관한 고찰
+## Static 에 대한 고찰
+
+* Static : 클래스의, 공통적인
+
+static은 클래스의 혹은 공통적인 이라는 의미를 가지고 있다. 즉 static 변수 (클래스 변수라고도 함)는 인스턴스에 관계 없이 같은 값을 갖는다. 그 이유는 하나의 변수를 모든 인스턴스가 공유하기 때문이다. 그래서 static이 붙은 변수와 함수는 인스턴스를 생성하지 않고 사용할 수 있다.
+
+그럼 어디다가 쓰는 것이 좋을까?
+
+인스턴스 멤버를 사용하지 않는 메서드에 static을 붙이는 방법을 고려하면 된다. 그렇다면 인스턴스를 생성하지 않기 때문에 편리하고 속도도 빠르다. 
+
+적용해보자! 운영중인 서비스의 유틸 함수이다.
+
+```java
+@UtilityClass
+public class DomainParser {
+    private static final Pattern REFERER_REGEX = Pattern.compile("(//)([A-Z0-9a-zㄱ-ㅎㅏ-ㅣ가-힣:+&@#%?=~_|!:,.;-]+)");
+    private static final int REFERER_GET = 2;
+    private static final List<String> REFERER_CHECK_LIST = Lists.newArrayList("KAKAO", "LINE");
+
+    public static String getDomain(String referer, String userAgent) {
+        String domainFromReferer = fromReferer(referer);
+        if (Objects.nonNull(domainFromReferer)) {
+            return domainFromReferer;
+        }
+
+        String domainFromUserAgent = fromUserAgent(userAgent);
+        if (Objects.nonNull(domainFromUserAgent)) {
+            return domainFromUserAgent;
+        }
+
+        return PlatformUtil.checkMobile(userAgent);
+    }
+
+
+    private static String fromReferer(String referer) {
+        Matcher matcher = REFERER_REGEX.matcher(referer);
+        if (matcher.find()) {
+            return matcher.group(REFERER_GET).replaceAll("www\\.", "");
+        }
+
+        return null;
+    }
+
+    private static String fromUserAgent (String userAgent) {
+        String userAgentUpper = userAgent.toUpperCase();
+        for (String platForm : REFERER_CHECK_LIST) {
+            if (userAgentUpper.contains(platForm)) {
+                return platForm;
+            }
+        }
+
+        return null;
+    }
+}
+```
+
+안에서 동작하는 3가지의 함수는 특별히 멤버변수를 쓰지 않는다. (위의 선언된 패턴과 숫자들은 상수이다) 저 밑의 fromReferer 함수와 fromUserAgent 함수가 지금보니 static으로 선언되지 않았다. 이 부분을 모두 static 함수로 리팩토링을 진행하였다.
+
+#### Final 에 대한 고찰
+
+final은 마지막, 변경 될 수 없는 이라는 뜻을 지니고 있다. 변수에 사용되면 값을 변경할 수 없는 상수가 되며, (위의 예처럼) 메서드에 사용하면 오버라이딩을 할 수 없게 되고 클래스에 사용되면 그 클래스를 상속할 수 없게 된다. 그리고 선언과 동시에 초기화할 수 있고 선언만 해 놓고 생성자에서 초기화하는 것 까지 가능하다. 생성자에서 초기화 하는 것은 각 인스턴스변수가 각기 다른 final 변수를 가지게 하기 위함이다.
+
+
+##### static과 final 사용시 주의 점
+
+접근 제어자가 private 인 메서드는 오버라이딩 될 수 없으므로 final을 굳이 붙일 필요가 없다. abstract 메서드는 자손쪽에서 구현해야 하므로 private 일 수 없다. static 메서드는 몸통이 있는 메서드에 사용 가능하므로 abstract을 함께 쓸 수 없다. 
+
+(static 참조) 자바의 정석 
+
 
 #### 참고) util 클래스의 private 생성자
 
